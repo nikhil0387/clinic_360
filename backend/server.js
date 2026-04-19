@@ -17,11 +17,19 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: [
-    'http://localhost:5173', 
-    'http://127.0.0.1:5173',
-    process.env.FRONTEND_URL // Allow Vercel domain from env
-  ].filter(Boolean), 
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'http://localhost:5173', 
+      'http://127.0.0.1:5173',
+      process.env.FRONTEND_URL
+    ];
+    // Allow if it matches allowedOrigins or is a Vercel subdomain
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 app.use(express.json());
