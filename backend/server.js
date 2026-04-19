@@ -17,22 +17,21 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: function (origin, callback) {
-    const allowedOrigins = [
-      'http://localhost:5173', 
-      'http://127.0.0.1:5173',
-      process.env.FRONTEND_URL
-    ];
-    // Allow if it matches allowedOrigins or is a Vercel subdomain
-    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: true, // Allow all origins for debugging
   credentials: true
 }));
 app.use(express.json());
+
+// Debugging Middleware
+app.use((req, res, next) => {
+  console.log(`${req.method} request to ${req.url}`);
+  next();
+});
+
+// Health Check Route
+app.get('/', (req, res) => {
+  res.send('Clinic 360 API is running...');
+});
 
 // Main Routes
 app.use('/api/auth', authRoutes);
