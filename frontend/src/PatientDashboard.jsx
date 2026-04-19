@@ -36,7 +36,7 @@ const PatientDashboard = () => {
       setFetchingAppointments(true);
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch('https://clinic-360.onrender.com/api/appointments', {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/appointments`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -67,7 +67,7 @@ const PatientDashboard = () => {
     setMessage('');
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('https://clinic-360.onrender.com/api/users/profile', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -16,7 +16,7 @@ const DoctorDashboard = () => {
     const fetchAppointments = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch('https://clinic-360.onrender.com/api/appointments', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/appointments`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
