@@ -17,7 +17,11 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://127.0.0.1:5173'], // Explicitly allow Vite frontend
+  origin: [
+    'http://localhost:5173', 
+    'http://127.0.0.1:5173',
+    process.env.FRONTEND_URL // Allow Vercel domain from env
+  ].filter(Boolean), 
   credentials: true
 }));
 app.use(express.json());
