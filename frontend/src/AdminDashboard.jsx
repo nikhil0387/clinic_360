@@ -33,10 +33,10 @@ const AdminDashboard = () => {
       try {
         const token = localStorage.getItem('token');
         const [appRes, staffRes] = await Promise.all([
-          fetch('http://localhost:5000/api/appointments', {
+          fetch('https://clinic-360.onrender.com/api/appointments', {
             headers: { 'Authorization': `Bearer ${token}` }
           }),
-          fetch('http://localhost:5000/api/users/doctors', {
+          fetch('https://clinic-360.onrender.com/api/users/doctors', {
             headers: { 'Authorization': `Bearer ${token}` }
           })
         ]);
@@ -70,7 +70,7 @@ const AdminDashboard = () => {
     setMessage('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/users/profile', {
+      const res = await fetch('https://clinic-360.onrender.com/api/users/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

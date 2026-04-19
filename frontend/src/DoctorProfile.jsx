@@ -26,7 +26,7 @@ const DoctorProfile = () => {
     const fetchDoctorAndSlots = async () => {
       try {
         setFetchingSlots(true);
-        const res = await fetch('http://localhost:5000/api/users/doctors');
+        const res = await fetch('https://clinic-360.onrender.com/api/users/doctors');
         if (res.ok) {
           const data = await res.json();
           const selectedDoc = idParam ? data.find(d => d._id === idParam) : data[0];
@@ -36,7 +36,7 @@ const DoctorProfile = () => {
 
             // Now fetch booked slots for this doctor
             const token = localStorage.getItem('token');
-            const appointmentsRes = await fetch(`http://localhost:5000/api/appointments`, {
+            const appointmentsRes = await fetch(`https://clinic-360.onrender.com/api/appointments`, {
               headers: { 'Authorization': `Bearer ${token}` }
             });
             if (appointmentsRes.ok) {
@@ -79,7 +79,7 @@ const DoctorProfile = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:5000/api/appointments', {
+      const response = await fetch('https://clinic-360.onrender.com/api/appointments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -22,7 +22,7 @@ const SpecialistRegistry = () => {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/users/doctors');
+        const res = await fetch('https://clinic-360.onrender.com/api/users/doctors');
         if (res.ok) {
           const data = await res.json();
           setDoctors(data);

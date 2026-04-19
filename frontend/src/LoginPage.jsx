@@ -28,7 +28,7 @@ const LoginPage = () => {
         else if (data.role === 'doctor') navigate('/doctor-dashboard');
         else if (data.role === 'admin') navigate('/admin-dashboard');
       } else if (mode === 'forgot') {
-        const res = await fetch('http://localhost:5000/api/auth/forgot-password', {
+        const res = await fetch('https://clinic-360.onrender.com/api/auth/forgot-password', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email })
@@ -41,7 +41,7 @@ const LoginPage = () => {
           throw new Error(data.message);
         }
       } else if (mode === 'reset') {
-        const res = await fetch('http://localhost:5000/api/auth/reset-password', {
+        const res = await fetch('https://clinic-360.onrender.com/api/auth/reset-password', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, otp, newPassword })
