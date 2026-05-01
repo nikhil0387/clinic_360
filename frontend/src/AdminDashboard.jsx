@@ -27,6 +27,20 @@ const AdminDashboard = () => {
   const [message, setMessage] = useState('');
   const [saveLoading, setSaveLoading] = useState(false);
 
+  const [showAddDoctorForm, setShowAddDoctorForm] = useState(false);
+  const [addDoctorLoading, setAddDoctorLoading] = useState(false);
+  const [addDoctorError, setAddDoctorError] = useState('');
+  const [newDoctorData, setNewDoctorData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    specialization: '',
+    experience: '',
+    consultationFee: '',
+    bio: ''
+  });
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -88,6 +102,41 @@ const AdminDashboard = () => {
       setMessage('Network error, please try again');
     } finally {
       setSaveLoading(false);
+    }
+  };
+
+  const handleNewDoctorChange = (e) => {
+    setNewDoctorData({ ...newDoctorData, [e.target.name]: e.target.value });
+  };
+
+  const handleAddDoctor = async (e) => {
+    e.preventDefault();
+    setAddDoctorLoading(true);
+    setAddDoctorError('');
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/doctors`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(newDoctorData)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStaff([...staff, data]);
+        setShowAddDoctorForm(false);
+        setNewDoctorData({
+          firstName: '', lastName: '', email: '', password: '', specialization: '', experience: '', consultationFee: '', bio: ''
+        });
+      } else {
+        setAddDoctorError(data.message || 'Failed to add doctor');
+      }
+    } catch (err) {
+      setAddDoctorError('Network error, please try again');
+    } finally {
+      setAddDoctorLoading(false);
     }
   };
 
@@ -309,43 +358,102 @@ const AdminDashboard = () => {
                 <button className="flex items-center gap-2 px-4 py-2.5 bg-surface-container-high text-primary font-semibold rounded-lg hover:bg-surface-container-highest transition-all text-sm">
                   <span className="material-symbols-outlined text-[20px]">file_download</span> Export
                 </button>
-                <button className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary font-semibold rounded-lg shadow-lg text-sm">
-                  <span className="material-symbols-outlined text-[20px]">add</span> Add Provider
-                </button>
+                {!showAddDoctorForm && (
+                  <button onClick={() => setShowAddDoctorForm(true)} className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary font-semibold rounded-lg shadow-lg text-sm hover:brightness-110 active:scale-95 transition-all">
+                    <span className="material-symbols-outlined text-[20px]">add</span> Add Provider
+                  </button>
+                )}
               </div>
             </div>
 
-            <div className="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm border border-slate-100 overflow-x-auto">
-              <table className="w-full text-left min-w-[600px]">
-                <thead className="bg-slate-50 border-b border-slate-100">
-                  <tr>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Practitioner</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Specialty</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Email</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {staff.map((doc) => (
-                    <tr key={doc._id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-5 flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-lg bg-primary-fixed text-primary flex items-center justify-center font-bold flex-shrink-0">
-                          {doc.firstName[0]}{doc.lastName[0]}
-                        </div>
-                        <span className="font-bold text-primary truncate">Dr. {doc.firstName} {doc.lastName}</span>
-                      </td>
-                      <td className="px-6 py-5 text-sm text-slate-600 truncate">{doc.specialization}</td>
-                      <td className="px-6 py-5 text-sm text-slate-600 truncate">{doc.email}</td>
-                      <td className="px-6 py-5 text-right">
-                        <button className="p-2 text-slate-400 hover:text-primary transition-all">
-                          <span className="material-symbols-outlined">edit</span>
-                        </button>
-                      </td>
+            {showAddDoctorForm ? (
+              <div className="bg-surface-container-lowest rounded-xl p-8 shadow-sm border border-slate-100 max-w-3xl">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-bold text-primary font-headline">New Doctor Details</h3>
+                  <button onClick={() => setShowAddDoctorForm(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                    <span className="material-symbols-outlined">close</span>
+                  </button>
+                </div>
+                {addDoctorError && <div className="mb-6 p-4 bg-error-container/20 text-error rounded-lg text-sm font-bold">{addDoctorError}</div>}
+                
+                <form onSubmit={handleAddDoctor} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">First Name</label>
+                      <input required name="firstName" type="text" value={newDoctorData.firstName} onChange={handleNewDoctorChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">Last Name</label>
+                      <input required name="lastName" type="text" value={newDoctorData.lastName} onChange={handleNewDoctorChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">Email Address</label>
+                      <input required name="email" type="email" value={newDoctorData.email} onChange={handleNewDoctorChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">Temporary Password</label>
+                      <input required name="password" type="password" autoComplete="new-password" value={newDoctorData.password} onChange={handleNewDoctorChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">Specialization</label>
+                      <input required name="specialization" type="text" placeholder="e.g. Cardiology" value={newDoctorData.specialization} onChange={handleNewDoctorChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">Years of Experience</label>
+                      <input required name="experience" type="number" placeholder="e.g. 10" value={newDoctorData.experience} onChange={handleNewDoctorChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">Consultation Fee ($)</label>
+                      <input required name="consultationFee" type="number" placeholder="e.g. 150" value={newDoctorData.consultationFee} onChange={handleNewDoctorChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2">Short Bio</label>
+                    <textarea required name="bio" rows="3" value={newDoctorData.bio} onChange={handleNewDoctorChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary resize-none"></textarea>
+                  </div>
+                  <div className="flex gap-4 pt-4">
+                    <button type="submit" disabled={addDoctorLoading} className="px-8 py-3 bg-primary text-white font-bold rounded-lg hover:brightness-110 active:scale-95 transition-all">
+                      {addDoctorLoading ? 'Adding...' : 'Add Doctor'}
+                    </button>
+                    <button type="button" onClick={() => setShowAddDoctorForm(false)} className="px-8 py-3 bg-surface-container-high text-primary font-bold rounded-lg hover:bg-slate-200 transition-all">
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            ) : (
+              <div className="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm border border-slate-100 overflow-x-auto">
+                <table className="w-full text-left min-w-[600px]">
+                  <thead className="bg-slate-50 border-b border-slate-100">
+                    <tr>
+                      <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Practitioner</th>
+                      <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Specialty</th>
+                      <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Email</th>
+                      <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {staff.map((doc) => (
+                      <tr key={doc._id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-5 flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-lg bg-primary-fixed text-primary flex items-center justify-center font-bold flex-shrink-0">
+                            {doc.firstName[0]}{doc.lastName[0]}
+                          </div>
+                          <span className="font-bold text-primary truncate">Dr. {doc.firstName} {doc.lastName}</span>
+                        </td>
+                        <td className="px-6 py-5 text-sm text-slate-600 truncate">{doc.specialization}</td>
+                        <td className="px-6 py-5 text-sm text-slate-600 truncate">{doc.email}</td>
+                        <td className="px-6 py-5 text-right">
+                          <button className="p-2 text-slate-400 hover:text-primary transition-all">
+                            <span className="material-symbols-outlined">edit</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </>
         )}
 

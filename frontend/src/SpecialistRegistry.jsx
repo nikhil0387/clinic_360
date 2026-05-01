@@ -41,9 +41,12 @@ const SpecialistRegistry = () => {
     navigate('/');
   };
 
-  const filteredDoctors = doctors.filter(doc => 
-    `${doc.firstName} ${doc.lastName}`.toLowerCase().includes(query.toLowerCase())
-  );
+  const filteredDoctors = doctors.filter(doc => {
+    const term = query.toLowerCase();
+    const fullName = `${doc.firstName} ${doc.lastName}`.toLowerCase();
+    const specialty = (doc.specialization || '').toLowerCase();
+    return fullName.includes(term) || specialty.includes(term);
+  });
 
   return (
     <div className="bg-background font-body text-on-surface antialiased min-h-screen flex flex-col">

@@ -11,6 +11,12 @@ const DoctorDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(initialTab);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isChartModalOpen, setIsChartModalOpen] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [isNewApptModalOpen, setIsNewApptModalOpen] = useState(false);
+  const [isQuickAdmissionModalOpen, setIsQuickAdmissionModalOpen] = useState(false);
+  const [newApptData, setNewApptData] = useState({ patientId: '', date: '', timeSlot: '', notes: '' });
+  const [quickAdmitData, setQuickAdmitData] = useState({ firstName: '', lastName: '', email: '', reason: '' });
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -38,6 +44,59 @@ const DoctorDashboard = () => {
   const todaysAppointments = appointments.filter(app => new Date(app.date).toISOString().split('T')[0] === today);
   const uniquePatients = new Set(appointments.map(app => app.patient?._id)).size;
   const shiftEarnings = todaysAppointments.filter(app => app.status === 'completed').length * 150;
+
+  const uniquePatientsList = Array.from(new Map(appointments.map(app => [app.patient?._id, app.patient])).values()).filter(Boolean);
+
+  const handleCreateAppointment = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/appointments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ ...newApptData, doctorId: user._id })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        // Optimistically add to list or re-fetch. Since we don't have populate on POST easily, we mock the patient object
+        const fullPatient = uniquePatientsList.find(p => p._id === newApptData.patientId);
+        setAppointments([...appointments, { ...data, patient: fullPatient }]);
+        setIsNewApptModalOpen(false);
+        setNewApptData({ patientId: '', date: '', timeSlot: '', notes: '' });
+      } else {
+        const err = await response.json();
+        alert('Failed to book: ' + err.message);
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Network error');
+    }
+  };
+
+  const handleQuickAdmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/quick-admit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(quickAdmitData)
+      });
+      if (response.ok) {
+        alert('Patient admitted successfully');
+        setIsQuickAdmissionModalOpen(false);
+        setQuickAdmitData({ firstName: '', lastName: '', email: '', reason: '' });
+      } else {
+        const err = await response.json();
+        alert('Failed to admit: ' + err.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error');
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -91,7 +150,7 @@ const DoctorDashboard = () => {
           </button>
         </nav>
         <div className="px-6 mb-8">
-          <button className="w-full py-3 bg-secondary text-white rounded-lg font-semibold text-sm hover:brightness-110 transition-all active:scale-95">
+          <button onClick={() => setIsQuickAdmissionModalOpen(true)} className="w-full py-3 bg-secondary text-white rounded-lg font-semibold text-sm hover:brightness-110 transition-all active:scale-95">
               Quick Admission
           </button>
         </div>
@@ -224,7 +283,7 @@ const DoctorDashboard = () => {
                     <p className="text-center text-on-surface-variant py-4">No upcoming appointments scheduled.</p>
                   ) : (
                     appointments.map(app => (
-                      <div key={app._id} className="flex items-center bg-surface-container-lowest p-4 rounded-xl shadow-sm border border-transparent hover:border-secondary/20 transition-all cursor-pointer group">
+                      <div key={app._id} onClick={() => { setSelectedPatient(app.patient); setIsChartModalOpen(true); }} className="flex items-center bg-surface-container-lowest p-4 rounded-xl shadow-sm border border-transparent hover:border-secondary/20 transition-all cursor-pointer group">
                         <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold text-base md:text-lg mr-4 flex-shrink-0">
                           {app.patient?.firstName?.[0] || 'P'}
                         </div>
@@ -237,8 +296,8 @@ const DoctorDashboard = () => {
                           <p className="text-secondary text-[10px] md:text-xs font-semibold">{new Date(app.date).toLocaleDateString()}</p>
                         </div>
                         <div className="flex items-center flex-shrink-0">
-                          <span className={`hidden sm:inline-block px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full mr-4 ${app.status === 'scheduled' ? 'bg-tertiary-fixed text-on-tertiary-fixed' : app.status === 'completed' ? 'bg-secondary-container text-on-secondary-container' : 'bg-error-container text-on-error-container'}`}>
-                            {app.status}
+                          <span className={`hidden sm:inline-block px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full mr-4 ${app.status === 'scheduled' ? 'bg-amber-100 text-amber-700' : app.status === 'completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                            {app.status === 'scheduled' ? 'Pending' : app.status}
                           </span>
                           <span className="material-symbols-outlined text-slate-300 group-hover:text-secondary transition-colors" data-icon="chevron_right">chevron_right</span>
                         </div>
@@ -299,7 +358,7 @@ const DoctorDashboard = () => {
                 <h2 className="text-2xl md:text-3xl font-bold text-primary font-headline">Appointments</h2>
                 <p className="text-on-surface-variant text-sm mt-1">Manage your complete schedule.</p>
               </div>
-              <button className="w-full sm:w-auto px-5 py-2.5 bg-secondary text-white font-bold rounded-lg shadow hover:bg-secondary/90 transition-all flex items-center justify-center">
+              <button onClick={() => setIsNewApptModalOpen(true)} className="w-full sm:w-auto px-5 py-2.5 bg-secondary text-white font-bold rounded-lg shadow hover:bg-secondary/90 transition-all flex items-center justify-center">
                 <span className="material-symbols-outlined mr-2">add</span> New
               </button>
             </div>
@@ -327,8 +386,8 @@ const DoctorDashboard = () => {
                         <td className="py-4 px-6 text-slate-600 font-semibold">{app.timeSlot}</td>
                         <td className="py-4 px-6 text-slate-50 text-xs max-w-[150px] truncate">{app.notes || 'N/A'}</td>
                         <td className="py-4 px-6">
-                          <span className={`px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full ${app.status === 'scheduled' ? 'bg-tertiary-fixed text-on-tertiary-fixed' : app.status === 'completed' ? 'bg-secondary-container text-on-secondary-container' : 'bg-error-container text-on-error-container'}`}>
-                            {app.status}
+                          <span className={`px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full ${app.status === 'scheduled' ? 'bg-amber-100 text-amber-700 border border-amber-200' : app.status === 'completed' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-red-100 text-red-700 border border-red-200'}`}>
+                            {app.status === 'scheduled' ? 'Pending' : app.status}
                           </span>
                         </td>
                       </tr>
@@ -370,7 +429,7 @@ const DoctorDashboard = () => {
                     <div className="flex justify-between"><span className="text-slate-500">Email</span><span className="font-semibold text-slate-700 truncate ml-2">{app.patient?.email}</span></div>
                     <div className="flex justify-between"><span className="text-slate-500">Status</span><span className="font-semibold text-emerald-600">Active</span></div>
                   </div>
-                  <button className="w-full mt-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition-colors">View Chart</button>
+                  <button onClick={() => { setSelectedPatient(app.patient); setIsChartModalOpen(true); }} className="w-full mt-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition-colors">View Chart</button>
                 </div>
               ))}
             </div>
@@ -453,10 +512,121 @@ const DoctorDashboard = () => {
       </main>
 
       {/* Contextual Floating Action Button */}
-      <button className="fixed bottom-8 right-8 w-14 h-14 bg-secondary text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 group">
+      <button onClick={() => setIsNewApptModalOpen(true)} className="fixed bottom-8 right-8 w-14 h-14 bg-secondary text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 group">
         <span className="material-symbols-outlined text-3xl" data-icon="add">add</span>
         <span className="absolute right-full mr-4 bg-primary text-white text-xs py-2 px-4 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">New Appointment</span>
       </button>
+      {/* Patient Chart Modal */}
+      {isChartModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsChartModalOpen(false)}></div>
+          <div className="relative bg-white/80 backdrop-blur-xl border border-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform transition-all">
+            <button onClick={() => setIsChartModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+              <span className="material-symbols-outlined">close</span>
+            </button>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xl font-bold">
+                {selectedPatient?.firstName?.[0] || 'P'}
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-slate-800">{selectedPatient?.firstName} {selectedPatient?.lastName}</h3>
+                <p className="text-sm text-slate-500">{selectedPatient?.email || 'No email provided'}</p>
+              </div>
+            </div>
+            <div className="space-y-4 text-sm">
+              <div className="bg-white/50 p-3 rounded-lg border border-slate-100">
+                <p className="text-xs text-slate-500 uppercase tracking-widest font-bold mb-1">Status</p>
+                <p className="font-semibold text-emerald-600">Active</p>
+              </div>
+              <div className="bg-white/50 p-3 rounded-lg border border-slate-100">
+                <p className="text-xs text-slate-500 uppercase tracking-widest font-bold mb-1">Recent Activity</p>
+                <p className="font-semibold text-slate-700">Appointment scheduled</p>
+              </div>
+            </div>
+            <button className="w-full mt-6 bg-primary text-white py-2.5 rounded-lg font-bold hover:bg-primary/90 transition-colors">
+              Full Medical Record
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* New Appointment Modal */}
+      {isNewApptModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsNewApptModalOpen(false)}></div>
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform transition-all">
+            <h3 className="text-xl font-bold text-primary mb-4">Book Appointment</h3>
+            <form className="space-y-4" onSubmit={handleCreateAppointment}>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Patient</label>
+                <select 
+                  required
+                  value={newApptData.patientId} 
+                  onChange={e => setNewApptData({...newApptData, patientId: e.target.value})}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-secondary"
+                >
+                  <option value="">Select Patient</option>
+                  {uniquePatientsList.map(p => (
+                    <option key={p._id} value={p._id}>{p.firstName} {p.lastName}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Date</label>
+                  <input required type="date" value={newApptData.date} onChange={e => setNewApptData({...newApptData, date: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-secondary" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Time</label>
+                  <input required type="time" value={newApptData.timeSlot} onChange={e => setNewApptData({...newApptData, timeSlot: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-secondary" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Notes</label>
+                <textarea value={newApptData.notes} onChange={e => setNewApptData({...newApptData, notes: e.target.value})} rows="3" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-secondary" placeholder="Reason for visit..."></textarea>
+              </div>
+              <div className="flex gap-3 mt-6">
+                <button type="button" onClick={() => setIsNewApptModalOpen(false)} className="flex-1 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-lg hover:bg-slate-200 transition-colors">Cancel</button>
+                <button type="submit" className="flex-1 py-2.5 bg-secondary text-white font-bold rounded-lg hover:bg-secondary/90 transition-colors">Book</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Admission Modal */}
+      {isQuickAdmissionModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsQuickAdmissionModalOpen(false)}></div>
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform transition-all">
+            <h3 className="text-xl font-bold text-primary mb-4">Quick Admission</h3>
+            <form className="space-y-4" onSubmit={handleQuickAdmit}>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">First Name</label>
+                  <input type="text" value={quickAdmitData.firstName} onChange={e => setQuickAdmitData({...quickAdmitData, firstName: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-secondary" required />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Last Name</label>
+                  <input type="text" value={quickAdmitData.lastName} onChange={e => setQuickAdmitData({...quickAdmitData, lastName: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-secondary" required />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Email</label>
+                <input type="email" value={quickAdmitData.email} onChange={e => setQuickAdmitData({...quickAdmitData, email: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-secondary" required />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Reason for Admission</label>
+                <textarea rows="2" value={quickAdmitData.reason} onChange={e => setQuickAdmitData({...quickAdmitData, reason: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-secondary" required></textarea>
+              </div>
+              <div className="flex gap-3 mt-6">
+                <button type="button" onClick={() => setIsQuickAdmissionModalOpen(false)} className="flex-1 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-lg hover:bg-slate-200 transition-colors">Cancel</button>
+                <button type="submit" className="flex-1 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors">Admit</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

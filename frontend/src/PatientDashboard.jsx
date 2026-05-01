@@ -19,6 +19,19 @@ const PatientDashboard = () => {
   const [message, setMessage] = useState('');
   const [appointments, setAppointments] = useState([]);
   const [fetchingAppointments, setFetchingAppointments] = useState(false);
+  const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState(null);
+  const [refillState, setRefillState] = useState({});
+
+  const handleRefill = (id) => {
+    setRefillState(prev => ({ ...prev, [id]: 'loading' }));
+    setTimeout(() => {
+      setRefillState(prev => ({ ...prev, [id]: 'success' }));
+      setTimeout(() => {
+        setRefillState(prev => ({ ...prev, [id]: 'idle' }));
+      }, 3000);
+    }, 1500);
+  };
 
   useEffect(() => {
     if (user) {
@@ -355,8 +368,8 @@ const PatientDashboard = () => {
                         </td>
                         <td className="py-4 px-6 text-slate-600 text-sm">Dr. {app.doctor?.lastName}</td>
                         <td className="py-4 px-6">
-                          <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full ${new Date(app.date) > new Date() ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                            {new Date(app.date) > new Date() ? 'Upcoming' : 'Completed'}
+                          <span className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-full ${app.status === 'scheduled' ? 'bg-amber-100 text-amber-700 border border-amber-200' : app.status === 'completed' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-red-100 text-red-700 border border-red-200'}`}>
+                            {app.status === 'scheduled' ? 'Pending' : app.status}
                           </span>
                         </td>
                       </tr>
@@ -385,7 +398,7 @@ const PatientDashboard = () => {
                     <p className="text-[10px] md:text-xs text-slate-500 truncate">Oct 15, 2023</p>
                   </div>
                 </div>
-                <button className="text-secondary font-bold text-xs md:text-sm hover:underline flex-shrink-0">View</button>
+                <button onClick={() => { setSelectedRecord({ type: 'Metabolic Panel', date: 'Oct 15, 2023', status: 'Normal', notes: 'All levels within healthy range. Continue current routine.' }); setIsRecordModalOpen(true); }} className="text-secondary font-bold text-xs md:text-sm hover:underline flex-shrink-0">View</button>
               </div>
             </div>
           </div>
@@ -396,30 +409,128 @@ const PatientDashboard = () => {
             <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
                 <h2 className="text-2xl md:text-3xl font-bold text-primary tracking-tight">Prescriptions</h2>
-                <p className="text-on-surface-variant mt-1 text-sm md:text-base">Active medications.</p>
+                <p className="text-on-surface-variant mt-1 text-sm md:text-base">Active medications and therapies.</p>
               </div>
-              <button 
-                onClick={() => {
-                  setLoading(true);
-                  setTimeout(() => {
-                    setLoading(false);
-                    setMessage('Refill request sent to your doctor successfully!');
-                    setActiveTab('dashboard');
-                    window.scrollTo(0, 0);
-                  }, 1500);
-                }}
-                className="w-full sm:w-auto bg-secondary text-white font-bold py-2.5 px-6 rounded-lg shadow hover:bg-secondary/90 transition-colors text-sm"
-              >
-                {loading ? 'Processing...' : 'Refill'}
-              </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                <h4 className="font-bold text-lg text-slate-800">Lisinopril 10mg</h4>
-                <p className="text-xs text-slate-600 mt-1">1 tablet daily</p>
-                <div className="mt-4 pt-4 border-t border-slate-100 text-[10px] text-slate-500">
-                  <p>Refills: 2</p>
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+              {/* Prescription Card 1 */}
+              <div className="bg-white p-6 md:p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 relative overflow-hidden group hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
+                <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-teal-50 to-emerald-50 rounded-bl-[100px] -z-10 group-hover:scale-110 transition-transform duration-500"></div>
+                
+                <div className="flex justify-between items-start mb-8">
+                  <div className="flex items-center gap-5">
+                    <div className="w-14 h-14 bg-teal-100 text-teal-600 rounded-2xl flex items-center justify-center shadow-inner">
+                      <span className="material-symbols-outlined text-3xl">medication</span>
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-2xl text-slate-800 tracking-tight">Lisinopril 10mg</h4>
+                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-700 bg-teal-50/80 px-3 py-1.5 rounded-lg mt-2 border border-teal-100">
+                        <span className="material-symbols-outlined text-[14px]">water_drop</span> ACE Inhibitor
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100">
+                    <p className="text-3xl font-black text-slate-800">2</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Refills</p>
+                  </div>
                 </div>
+
+                <div className="space-y-4 mb-8">
+                  <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 hover:bg-slate-50 transition-colors">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[16px] text-indigo-400">info</span> Disease Indication
+                    </p>
+                    <p className="text-sm font-bold text-slate-800">Hypertension (High Blood Pressure)</p>
+                    <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">Relaxes blood vessels so blood can flow more easily. This helps to lower blood pressure and prevent potential strokes or heart attacks.</p>
+                  </div>
+                  <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 hover:bg-slate-50 transition-colors">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[16px] text-amber-400">schedule</span> Dosage Instructions
+                    </p>
+                    <p className="text-sm font-bold text-slate-800">1 tablet daily in the morning</p>
+                    <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">Take with or without food. Do not skip doses even if you feel well. Consult doctor if experiencing dizziness.</p>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => handleRefill('lisinopril')}
+                  disabled={refillState['lisinopril'] === 'loading' || refillState['lisinopril'] === 'success'}
+                  className={`w-full py-4 rounded-xl font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-lg ${
+                    refillState['lisinopril'] === 'success' 
+                      ? 'bg-emerald-500 text-white shadow-emerald-500/30 ring-4 ring-emerald-500/20' 
+                      : refillState['lisinopril'] === 'loading'
+                      ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
+                      : 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white hover:shadow-teal-500/40 hover:-translate-y-1 active:translate-y-0'
+                  }`}
+                >
+                  {refillState['lisinopril'] === 'loading' ? (
+                    <><span className="material-symbols-outlined animate-spin text-xl">autorenew</span> Processing Request...</>
+                  ) : refillState['lisinopril'] === 'success' ? (
+                    <><span className="material-symbols-outlined text-xl">check_circle</span> Refill Request Sent Successfully!</>
+                  ) : (
+                    <><span className="material-symbols-outlined text-xl">local_pharmacy</span> Request Instant Refill</>
+                  )}
+                </button>
+              </div>
+
+              {/* Prescription Card 2 (Mock) */}
+              <div className="bg-white p-6 md:p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 relative overflow-hidden group hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
+                <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-bl-[100px] -z-10 group-hover:scale-110 transition-transform duration-500"></div>
+                
+                <div className="flex justify-between items-start mb-8">
+                  <div className="flex items-center gap-5">
+                    <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center shadow-inner">
+                      <span className="material-symbols-outlined text-3xl">pill</span>
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-2xl text-slate-800 tracking-tight">Atorvastatin 20mg</h4>
+                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50/80 px-3 py-1.5 rounded-lg mt-2 border border-blue-100">
+                        <span className="material-symbols-outlined text-[14px]">science</span> Statin
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100">
+                    <p className="text-3xl font-black text-slate-800">1</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Refill</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4 mb-8">
+                  <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 hover:bg-slate-50 transition-colors">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[16px] text-indigo-400">info</span> Disease Indication
+                    </p>
+                    <p className="text-sm font-bold text-slate-800">Hyperlipidemia (High Cholesterol)</p>
+                    <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">Lowers "bad" cholesterol and triglycerides in the blood, while increasing "good" cholesterol. Reduces risk of heart disease.</p>
+                  </div>
+                  <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 hover:bg-slate-50 transition-colors">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[16px] text-amber-400">schedule</span> Dosage Instructions
+                    </p>
+                    <p className="text-sm font-bold text-slate-800">1 tablet daily at bedtime</p>
+                    <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">Cholesterol production is highest at night. Avoid eating grapefruit or drinking grapefruit juice.</p>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => handleRefill('atorvastatin')}
+                  disabled={refillState['atorvastatin'] === 'loading' || refillState['atorvastatin'] === 'success'}
+                  className={`w-full py-4 rounded-xl font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-lg ${
+                    refillState['atorvastatin'] === 'success' 
+                      ? 'bg-emerald-500 text-white shadow-emerald-500/30 ring-4 ring-emerald-500/20' 
+                      : refillState['atorvastatin'] === 'loading'
+                      ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
+                      : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-blue-500/40 hover:-translate-y-1 active:translate-y-0'
+                  }`}
+                >
+                  {refillState['atorvastatin'] === 'loading' ? (
+                    <><span className="material-symbols-outlined animate-spin text-xl">autorenew</span> Processing Request...</>
+                  ) : refillState['atorvastatin'] === 'success' ? (
+                    <><span className="material-symbols-outlined text-xl">check_circle</span> Refill Request Sent Successfully!</>
+                  ) : (
+                    <><span className="material-symbols-outlined text-xl">local_pharmacy</span> Request Instant Refill</>
+                  )}
+                </button>
               </div>
             </div>
           </div>
@@ -539,6 +650,35 @@ const PatientDashboard = () => {
           <p className="text-[10px] uppercase tracking-widest text-slate-400">© 2024 Clinic 360.</p>
         </footer>
       </main>
+      {/* Record Modal */}
+      {isRecordModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsRecordModalOpen(false)}></div>
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform transition-all">
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center"><span className="material-symbols-outlined">science</span></div>
+                <div>
+                  <h3 className="text-lg font-bold text-primary">{selectedRecord?.type}</h3>
+                  <p className="text-xs text-slate-500">{selectedRecord?.date}</p>
+                </div>
+              </div>
+              <button onClick={() => setIsRecordModalOpen(false)} className="text-slate-400 hover:text-slate-600"><span className="material-symbols-outlined">close</span></button>
+            </div>
+            <div className="space-y-4">
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mb-1">Result Status</p>
+                <p className="font-semibold text-emerald-600">{selectedRecord?.status}</p>
+              </div>
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mb-1">Doctor's Notes</p>
+                <p className="text-sm text-slate-700">{selectedRecord?.notes}</p>
+              </div>
+            </div>
+            <button onClick={() => setIsRecordModalOpen(false)} className="w-full mt-6 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-lg transition-colors">Close</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

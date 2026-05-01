@@ -6,22 +6,29 @@ import mongoose from 'mongoose';
 // @route   POST /api/appointments
 // @access  Private (Patient/Admin)
 export const createAppointment = async (req, res) => {
-  const { doctorId, date, timeSlot, notes } = req.body;
+  const { doctorId, patientId, date, timeSlot, notes } = req.body;
 
   // We start a transaction session
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
+    const actualDoctorId = req.user.role === 'doctor' ? req.user._id : doctorId;
+    const actualPatientId = req.user.role === 'patient' ? req.user._id : patientId;
+
     // 1. Verify doctor exists and is actually a doctor
-    const doctor = await User.findOne({ _id: doctorId, role: 'doctor' }).session(session);
+    const doctor = await User.findOne({ _id: actualDoctorId, role: 'doctor' }).session(session);
     if (!doctor) {
       throw new Error('Doctor not found or invalid doctor ID');
     }
 
+    if (!actualPatientId) {
+       throw new Error('Patient ID is required');
+    }
+
     // 2. Check for double booking (atomic check within transaction)
     const existingAppointment = await Appointment.findOne({
-      doctor: doctorId,
+      doctor: actualDoctorId,
       date: new Date(date),
       timeSlot
     }).session(session);
@@ -32,8 +39,8 @@ export const createAppointment = async (req, res) => {
 
     // 3. Create the appointment
     const appointment = await Appointment.create([{
-      patient: req.user._id,
-      doctor: doctorId,
+      patient: actualPatientId,
+      doctor: actualDoctorId,
       date: new Date(date),
       timeSlot,
       notes
@@ -52,10 +59,12 @@ export const createAppointment = async (req, res) => {
     // Check if error is due to replica set (meaning local dev environment isn't setup for transactions)
     if (error.message.includes('Transaction numbers')) {
         console.warn('MongoDB Replica Set not detected. Falling back to non-transactional creation.');
+        const actualDoctorId = req.user.role === 'doctor' ? req.user._id : doctorId;
+        const actualPatientId = req.user.role === 'patient' ? req.user._id : patientId;
         try {
             const fallbackAppointment = await Appointment.create({
-                patient: req.user._id,
-                doctor: doctorId,
+                patient: actualPatientId,
+                doctor: actualDoctorId,
                 date: new Date(date),
                 timeSlot,
                 notes
