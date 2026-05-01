@@ -9,21 +9,31 @@ export const AuthProvider = ({ children }) => {
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
   const sendRegistrationOtp = async (email) => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/send-otp`, {
+    const response = await fetch(`${API_URL}/api/auth/send-otp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
     });
     
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to send OTP');
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.indexOf("application/json") !== -1) {
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send OTP');
+      }
+      return data;
+    } else {
+      const text = await response.text();
+      console.error("Server Error Response:", text);
+      throw new Error("Backend server error. Please check your terminal for SMTP or Database errors.");
     }
   };
 
   const register = async (firstName, lastName, email, password, role, otp) => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/register`, {
+    const response = await fetch(`${API_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ firstName, lastName, email, password, role, otp }),
@@ -42,7 +52,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (email, password) => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
+    const response = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),

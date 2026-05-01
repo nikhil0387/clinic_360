@@ -21,6 +21,8 @@ const LoginPage = () => {
     setMessage('');
     setLoading(true);
 
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    
     try {
       if (mode === 'login') {
         const data = await login(email, password);
@@ -28,33 +30,46 @@ const LoginPage = () => {
         else if (data.role === 'doctor') navigate('/doctor-dashboard');
         else if (data.role === 'admin') navigate('/admin-dashboard');
       } else if (mode === 'forgot') {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/forgot-password`, {
+        const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email })
         });
-        const data = await res.json();
-        if (res.ok) {
-          setMessage('OTP sent to your email.');
-          setMode('reset');
+        
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await res.json();
+          if (res.ok) {
+            setMessage('OTP sent to your email.');
+            setMode('reset');
+          } else {
+            throw new Error(data.message || 'Failed to send OTP');
+          }
         } else {
-          throw new Error(data.message);
+          throw new Error("Server Error: The backend is not responding with JSON. Check terminal.");
         }
       } else if (mode === 'reset') {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/reset-password`, {
+        const res = await fetch(`${API_URL}/api/auth/reset-password`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, otp, newPassword })
         });
-        const data = await res.json();
-        if (res.ok) {
-          setMessage('Password reset successful. You can now login.');
-          setMode('login');
+        
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await res.json();
+          if (res.ok) {
+            setMessage('Password reset successful. You can now login.');
+            setMode('login');
+          } else {
+            throw new Error(data.message || 'Reset failed');
+          }
         } else {
-          throw new Error(data.message);
+          throw new Error("Server Error: The backend is not responding with JSON. Check terminal.");
         }
       }
     } catch (err) {
+      console.error('Auth action failed:', err);
       setError(err.message || 'Action failed.');
     } finally {
       setLoading(false);
