@@ -11,8 +11,26 @@ const LandingPage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
-
   const [activeSection, setActiveSection] = useState('home');
+  const [featuredDoctors, setFeaturedDoctors] = useState([]);
+  const [loadingDoctors, setLoadingDoctors] = useState(true);
+
+  React.useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/doctors`);
+        if (res.ok) {
+          const data = await res.json();
+          setFeaturedDoctors(data.slice(0, 4));
+        }
+      } catch (err) {
+        console.error('Failed to fetch doctors', err);
+      } finally {
+        setLoadingDoctors(false);
+      }
+    };
+    fetchDoctors();
+  }, []);
 
   const handleSubscribe = (e) => {
     e.preventDefault();
@@ -214,89 +232,31 @@ const LandingPage = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            {/* Dr Card 1 */}
-            <div className="group bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col h-full">
-              <div className="relative h-64 overflow-hidden">
-                <img className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdaBxnWQ2fTuBvHgvywTiIxAf3VHLcCvfe2QgdMyn7iTNdWVI1DbUKybc8LfD2ORP5NaEaTDGCGSepa637h_SBs3ObRqHotyy7fBA2MptHesw1RRFDYafEeWXnE-u8881DoNnI5YUbf1gnTyOO1YoKuBRZhMz26B_3QmPDpNeXowcDwCK6AldLrB7NjQ_01zijusNngrGZlnXIHBg_UtW2WAfqgoNv4WaHElg0IrK0kSMAdwnt30YT8g43UY_sE4y6wDFUdLUuEPjB" alt="Dr Julian Vance" />
-                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                  <span className="material-symbols-outlined text-yellow-500 text-sm" style={{fontVariationSettings: "'FILL' 1"}}>star</span>
-                  <span className="text-xs font-bold text-primary">4.9</span>
+            {loadingDoctors ? (
+              <div className="col-span-full py-12 text-center text-slate-500 animate-pulse">Loading Specialists...</div>
+            ) : (
+              featuredDoctors.map(doc => (
+                <div key={doc._id} className="group bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col h-full">
+                  <div className="relative h-64 overflow-hidden">
+                    <img className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" src={doc.profileImage || "https://lh3.googleusercontent.com/aida-public/AB6AXuAdaBxnWQ2fTuBvHgvywTiIxAf3VHLcCvfe2QgdMyn7iTNdWVI1DbUKybc8LfD2ORP5NaEaTDGCGSepa637h_SBs3ObRqHotyy7fBA2MptHesw1RRFDYafEeWXnE-u8881DoNnI5YUbf1gnTyOO1YoKuBRZhMz26B_3QmPDpNeXowcDwCK6AldLrB7NjQ_01zijusNngrGZlnXIHBg_UtW2WAfqgoNv4WaHElg0IrK0kSMAdwnt30YT8g43UY_sE4y6wDFUdLUuEPjB"} alt={`Dr ${doc.firstName} ${doc.lastName}`} />
+                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                      <span className="material-symbols-outlined text-yellow-500 text-sm" style={{fontVariationSettings: "'FILL' 1"}}>star</span>
+                      <span className="text-xs font-bold text-primary">4.9</span>
+                    </div>
+                  </div>
+                  <div className="p-6 flex-1 flex flex-col justify-between">
+                    <div>
+                      <h3 className="font-headline text-xl font-bold text-primary mb-1">Dr. {doc.firstName} {doc.lastName}</h3>
+                      <p className="text-sm text-secondary font-semibold mb-4">{doc.specialization}</p>
+                      <p className="text-sm text-on-surface-variant leading-relaxed mb-6 line-clamp-3">{doc.bio || 'Dedicated to providing the best care for patients.'}</p>
+                    </div>
+                    <Link to={`/doctor?id=${doc._id}`} className="w-full py-3 rounded-lg border-2 border-surface-variant text-primary font-bold hover:bg-primary hover:text-white hover:border-primary transition-all text-center block">
+                        View Profile
+                    </Link>
+                  </div>
                 </div>
-              </div>
-              <div className="p-6 flex-1 flex flex-col justify-between">
-                <div>
-                  <h3 className="font-headline text-xl font-bold text-primary mb-1">Dr. Julian Vance</h3>
-                  <p className="text-sm text-secondary font-semibold mb-4">Senior Nephrologist</p>
-                  <p className="text-sm text-on-surface-variant leading-relaxed mb-6">Specializing in chronic kidney disease management and advanced dialysis treatments.</p>
-                </div>
-                <Link to="/doctor" className="w-full py-3 rounded-lg border-2 border-surface-variant text-primary font-bold hover:bg-primary hover:text-white hover:border-primary transition-all text-center block">
-                    View Profile
-                </Link>
-              </div>
-            </div>
-            
-            {/* Dr Card 2 */}
-            <div className="group bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col h-full">
-              <div className="relative h-64 overflow-hidden">
-                <img className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7JmvqVGOuWbleR80eCyJpHVKYOvk1E17ffyhp417HONfB0l4gUomHAeBT5W840RugBJ8mRF1FdulK2YNDO0JuHY1Jyoo_TgTvRkyog6jUtjnhsz_pKgKp2pwYm5CKl_n2tptnOEtpKNZiD4a9SPY7TBZCPgTqR26TPcxyMMF7dLA0Xja_jp_N0lLgBRNbjoJB9a7lzTCtbYrsjNi8BzkgI7pA-aATquxnYayj4_WZLB1aE4UT--v0jluof9YYkLjc1Rn4RaKImgmv" alt="Dr Sarah Chen" />
-                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                  <span className="material-symbols-outlined text-yellow-500 text-sm" style={{fontVariationSettings: "'FILL' 1"}}>star</span>
-                  <span className="text-xs font-bold text-primary">5.0</span>
-                </div>
-              </div>
-              <div className="p-6 flex-1 flex flex-col justify-between">
-                <div>
-                  <h3 className="font-headline text-xl font-bold text-primary mb-1">Dr. Sarah Chen</h3>
-                  <p className="text-sm text-secondary font-semibold mb-4">Pediatric Cardiologist</p>
-                  <p className="text-sm text-on-surface-variant leading-relaxed mb-6">Expert in congenital heart conditions and non-invasive pediatric diagnostics.</p>
-                </div>
-                <button className="w-full py-3 rounded-lg border-2 border-surface-variant text-primary font-bold hover:bg-primary hover:text-white hover:border-primary transition-all">
-                    View Profile
-                </button>
-              </div>
-            </div>
-            
-            {/* Dr Card 3 */}
-            <div className="group bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col h-full">
-              <div className="relative h-64 overflow-hidden">
-                <img className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAql3OWnWWHW2O2YLCyUWB3bjrHd4-d9okSIv-YJrIyrxaFNMf7JXB5gZc5jIzSj3RtZ3DtagV6IuEXee-yhRqjJA0O0FfooFp6EE2hzavMpDP0Zw2mUnRd6HgSnkaH8A7CDFCUnWZ7IkNVwt9n76lFdp0iHCTwJI70PpKS_XoB8lqCyYex-nXRTEpovT3-QmxVrR8hOGzmpSp-6JIE0CZ3Y4YXLl8KaLON5bN34rjtXTgYDgtO6FamsQ9Hlao73rWdG1e9yM9MyIXF" alt="Dr Michael Russo" />
-                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                  <span className="material-symbols-outlined text-yellow-500 text-sm" style={{fontVariationSettings: "'FILL' 1"}}>star</span>
-                  <span className="text-xs font-bold text-primary">4.8</span>
-                </div>
-              </div>
-              <div className="p-6 flex-1 flex flex-col justify-between">
-                <div>
-                  <h3 className="font-headline text-xl font-bold text-primary mb-1">Dr. Michael Russo</h3>
-                  <p className="text-sm text-secondary font-semibold mb-4">Orthopedic Surgeon</p>
-                  <p className="text-sm text-on-surface-variant leading-relaxed mb-6">Focused on sports medicine and minimally invasive joint replacement surgeries.</p>
-                </div>
-                <button className="w-full py-3 rounded-lg border-2 border-surface-variant text-primary font-bold hover:bg-primary hover:text-white hover:border-primary transition-all">
-                    View Profile
-                </button>
-              </div>
-            </div>
-            
-            {/* Dr Card 4 */}
-            <div className="group bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col h-full">
-              <div className="relative h-64 overflow-hidden">
-                <img className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiGWXqsuBk2DXZKHt08tCIdY6oyKJxMYB9CYxTPMor6YSUbwxGmCcp2Hiq6qukZC98iy-Yjp4DpGAUc_HkmcXSlgX1hAlKhpMUGvacyi0ErIKEwno93zEZAfOLP95wL06FBVYNOoSt5rUzmVbvYrqNPs5N4b5EAokdN_oOG5wuweizEwpdNQYMdP8EVtJI7Lt9--8scd1wNEKXo-Dq1kxfjTWIPSDpcZqpEPJBmFxV6w3ZT_AWkGrRrcNQ5mFrGm7SMeda-iIn7NEL" alt="Dr Elena Rodriguez" />
-                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                  <span className="material-symbols-outlined text-yellow-500 text-sm" style={{fontVariationSettings: "'FILL' 1"}}>star</span>
-                  <span className="text-xs font-bold text-primary">4.9</span>
-                </div>
-              </div>
-              <div className="p-6 flex-1 flex flex-col justify-between">
-                <div>
-                  <h3 className="font-headline text-xl font-bold text-primary mb-1">Dr. Elena Rodriguez</h3>
-                  <p className="text-sm text-secondary font-semibold mb-4">Neurologist</p>
-                  <p className="text-sm text-on-surface-variant leading-relaxed mb-6">Specializing in neuro-regenerative therapies and cognitive wellness programs.</p>
-                </div>
-                <button className="w-full py-3 rounded-lg border-2 border-surface-variant text-primary font-bold hover:bg-primary hover:text-white hover:border-primary transition-all">
-                    View Profile
-                </button>
-              </div>
-            </div>
+              ))
+            )}
           </div>
         </section>
 

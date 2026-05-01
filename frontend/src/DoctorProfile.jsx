@@ -21,6 +21,7 @@ const DoctorProfile = () => {
   const [doctorData, setDoctorData] = useState(null);
   const [bookedSlots, setBookedSlots] = useState([]);
   const [fetchingSlots, setFetchingSlots] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
     const fetchDoctorAndSlots = async () => {
@@ -74,7 +75,7 @@ const DoctorProfile = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        setError('You must be logged in to book an appointment.');
+        setShowLoginModal(true);
         setIsBooking(false);
         return;
       }
@@ -601,6 +602,33 @@ const DoctorProfile = () => {
           </div>
         </div>
       </aside>
+
+      {/* Login Prompt Modal */}
+      {showLoginModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 max-w-sm w-full shadow-2xl relative">
+            <button onClick={() => setShowLoginModal(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-800 dark:hover:text-white">
+              <span className="material-symbols-outlined">close</span>
+            </button>
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-2">
+                <span className="material-symbols-outlined text-3xl">lock</span>
+              </div>
+              <h2 className="text-2xl font-bold font-headline text-slate-900 dark:text-white">Sign In Required</h2>
+              <p className="text-slate-600 dark:text-slate-400">Please sign in to your patient account to book an appointment.</p>
+              
+              <div className="pt-4 flex flex-col gap-3">
+                <Link to="/login" className="w-full bg-primary text-white font-bold py-3 rounded-lg hover:bg-secondary transition-colors text-center">
+                  Go to Login
+                </Link>
+                <button onClick={() => setShowLoginModal(false)} className="w-full py-3 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,0 +1,1 @@
+git remote add origin https://github.com/nikhil0387/clinic_360.git
