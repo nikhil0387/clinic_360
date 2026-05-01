@@ -83,11 +83,13 @@ export const registerUser = async (req, res) => {
 
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
+  console.log(`Login attempt for: ${email}`);
 
   try {
     const user = await User.findOne({ email });
 
     if (user && (await bcrypt.compare(password, user.password))) {
+      console.log(`Login successful for: ${email}`);
       res.json({
         _id: user._id,
         firstName: user.firstName,
@@ -97,9 +99,11 @@ export const loginUser = async (req, res) => {
         token: generateToken(user._id),
       });
     } else {
+      console.warn(`Login failed for: ${email} - Invalid credentials`);
       res.status(401).json({ message: 'Invalid email or password' });
     }
   } catch (error) {
+    console.error(`Login error for ${email}:`, error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -131,28 +135,35 @@ export const sendOtp = async (req, res) => {
     });
 
     // Send email
-    const transporter = getTransporter();
-    const info = await transporter.sendMail({
-      from: `"Clinic 360" <${process.env.SMTP_USER}>`,
-      to: email,
-      subject: 'Your Registration OTP - Clinic 360',
-      text: `Your OTP for registration is ${otp}. It is valid for 10 minutes.`,
-      html: `<b>Your OTP for registration is ${otp}.</b><br>It is valid for 10 minutes.`,
-    });
-    
-    console.log('OTP Email sent: %s', info.messageId);
-
-    res.status(200).json({ message: 'OTP sent successfully' });
+    try {
+      const transporter = getTransporter();
+      const info = await transporter.sendMail({
+        from: `"Clinic 360" <${process.env.SMTP_USER}>`,
+        to: email,
+        subject: 'Your Registration OTP - Clinic 360',
+        text: `Your OTP for registration is ${otp}. It is valid for 10 minutes.`,
+        html: `<b>Your OTP for registration is ${otp}.</b><br>It is valid for 10 minutes.`,
+      });
+      
+      console.log('OTP Email sent successfully to:', email);
+      res.status(200).json({ message: 'OTP sent successfully' });
+    } catch (mailError) {
+      console.error('SMTP Error during registration:', mailError.message);
+      res.status(500).json({ message: 'Failed to send OTP. Please check backend SMTP settings.' });
+    }
   } catch (error) {
+    console.error('General registration OTP error:', error.message);
     res.status(500).json({ message: error.message });
   }
 };
 
 export const forgotPassword = async (req, res) => {
   const { email } = req.body;
+  console.log(`Forgot password request for: ${email}`);
   try {
     const user = await User.findOne({ email });
     if (!user) {
+      console.warn(`Forgot password failed: User ${email} not found`);
       return res.status(404).json({ message: 'User not found' });
     }
 
@@ -162,18 +173,26 @@ export const forgotPassword = async (req, res) => {
 
     await OTP.deleteMany({ email });
     await OTP.create({ email, otp: hashedOtp });
+    console.log(`Reset OTP generated for ${email}`);
 
     const transporter = getTransporter();
-    await transporter.sendMail({
-      from: `"Clinic 360" <${process.env.SMTP_USER}>`,
-      to: email,
-      subject: 'Password Reset OTP - Clinic 360',
-      text: `Your OTP for password reset is ${otp}. Valid for 10 minutes.`,
-      html: `<b>Your OTP for password reset is ${otp}.</b><br>Valid for 10 minutes.`,
-    });
+    try {
+      await transporter.sendMail({
+        from: `"Clinic 360" <${process.env.SMTP_USER}>`,
+        to: email,
+        subject: 'Password Reset OTP - Clinic 360',
+        text: `Your OTP for password reset is ${otp}. Valid for 10 minutes.`,
+        html: `<b>Your OTP for password reset is ${otp}.</b><br>Valid for 10 minutes.`,
+      });
+      console.log(`Reset email sent successfully to ${email}`);
+    } catch (mailError) {
+      console.error(`Mail delivery failed to ${email}:`, mailError);
+      return res.status(500).json({ message: 'Failed to send email. Check SMTP settings.' });
+    }
 
     res.status(200).json({ message: 'Reset OTP sent to email' });
   } catch (error) {
+    console.error(`Forgot password error for ${email}:`, error);
     res.status(500).json({ message: error.message });
   }
 };
