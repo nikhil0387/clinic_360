@@ -90,6 +90,7 @@ const RegisterPage = () => {
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-1.5" htmlFor="firstName">First Name</label>
                 <input 
                   id="firstName" name="firstName" type="text" required 
+                  autoComplete="given-name"
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm"
                   placeholder="John"
                   value={formData.firstName} onChange={handleChange}
@@ -99,6 +100,7 @@ const RegisterPage = () => {
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-1.5" htmlFor="lastName">Last Name</label>
                 <input 
                   id="lastName" name="lastName" type="text" required 
+                  autoComplete="family-name"
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm"
                   placeholder="Doe"
                   value={formData.lastName} onChange={handleChange}
@@ -110,6 +112,7 @@ const RegisterPage = () => {
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-1.5" htmlFor="email">Email Address</label>
               <input 
                 id="email" name="email" type="email" required 
+                autoComplete="email"
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm"
                 placeholder="john@example.com"
                 value={formData.email} onChange={handleChange}
@@ -120,6 +123,7 @@ const RegisterPage = () => {
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-1.5" htmlFor="password">Password</label>
               <input 
                 id="password" name="password" type="password" required 
+                autoComplete="new-password"
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm"
                 placeholder="••••••••"
                 value={formData.password} onChange={handleChange}

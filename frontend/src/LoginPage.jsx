@@ -118,6 +118,7 @@ const LoginPage = () => {
               <input 
                 id="email" type="email" required 
                 readOnly={mode === 'reset'}
+                autoComplete="email"
                 className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm font-medium ${mode === 'reset' ? 'opacity-70' : ''}`}
                 placeholder="name@example.com"
                 value={email} onChange={(e) => setEmail(e.target.value)}
@@ -133,6 +134,7 @@ const LoginPage = () => {
               </div>
               <input 
                 id="password" type="password" required 
+                autoComplete="current-password"
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm font-medium"
                 placeholder="••••••••"
                 value={password} onChange={(e) => setPassword(e.target.value)}
