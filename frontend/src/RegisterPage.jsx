@@ -44,7 +44,12 @@ const RegisterPage = () => {
     setLoading(true);
 
     try {
-      await register(formData.firstName, formData.lastName, formData.email, formData.password, formData.role, otp);
+      const extraData = formData.role === 'doctor' ? { 
+        specialization: formData.specialization, 
+        consultationFee: formData.consultationFee 
+      } : {};
+      
+      await register(formData.firstName, formData.lastName, formData.email, formData.password, formData.role, otp, extraData);
       
       // Navigate to dashboard automatically upon successful registration
       if (formData.role === 'patient') navigate('/dashboard');
@@ -145,6 +150,29 @@ const RegisterPage = () => {
                 <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
               </div>
             </div>
+
+            {formData.role === 'doctor' && (
+              <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-1.5" htmlFor="specialization">Specialization</label>
+                  <input 
+                    id="specialization" name="specialization" type="text" required 
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm"
+                    placeholder="Cardiology"
+                    value={formData.specialization || ''} onChange={handleChange}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-1.5" htmlFor="consultationFee">Fee ($)</label>
+                  <input 
+                    id="consultationFee" name="consultationFee" type="number" required 
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm"
+                    placeholder="100"
+                    value={formData.consultationFee || ''} onChange={handleChange}
+                  />
+                </div>
+              </div>
+            )}
 
             <button 
               type="submit" 
