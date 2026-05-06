@@ -9,15 +9,25 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Nodemailer config (using Ethereal for testing if no env vars are provided)
 // Nodemailer config for Gmail - Dynamic initialization
 const getTransporter = () => {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    console.warn('WARNING: SMTP credentials missing in .env file');
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+
+  if (!user || !pass) {
+    console.warn('CRITICAL WARNING: SMTP credentials missing in .env file. Email features will fail.');
   }
+
+  // More robust Gmail configuration with timeouts
   return nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, // true for 465, false for other ports
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
+      user: user,
+      pass: pass,
     },
+    connectionTimeout: 10000, // 10 seconds
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
   });
 };
 
@@ -28,7 +38,7 @@ const generateToken = (id) => {
 };
 
 export const registerUser = async (req, res) => {
-  const { firstName, lastName, email, password, role, otp } = req.body;
+  const { firstName, lastName, email, password, role, otp, specialization, consultationFee } = req.body;
 
   try {
     if (!otp) {
@@ -62,6 +72,8 @@ export const registerUser = async (req, res) => {
       email,
       password: hashedPassword,
       role: role || 'patient',
+      specialization: role === 'doctor' ? specialization : undefined,
+      consultationFee: role === 'doctor' ? consultationFee : undefined,
     });
 
     if (user) {
@@ -136,15 +148,16 @@ export const sendOtp = async (req, res) => {
 
     // Send email
     try {
+      console.log(`Attempting to send OTP email to: ${email}...`);
       const transporter = getTransporter();
-      const info = await transporter.sendMail({
+      await transporter.sendMail({
         from: `"Clinic 360" <${process.env.SMTP_USER}>`,
         to: email,
         subject: 'Your Registration OTP - Clinic 360',
         text: `Your OTP for registration is ${otp}. It is valid for 10 minutes.`,
         html: `<b>Your OTP for registration is ${otp}.</b><br>It is valid for 10 minutes.`,
       });
-      
+
       console.log('OTP Email sent successfully to:', email);
       res.status(200).json({ message: 'OTP sent successfully' });
     } catch (mailError) {
@@ -175,6 +188,7 @@ export const forgotPassword = async (req, res) => {
     await OTP.create({ email, otp: hashedOtp });
     console.log(`Reset OTP generated for ${email}`);
 
+    console.log(`Attempting to send Password Reset email to: ${email}...`);
     const transporter = getTransporter();
     try {
       await transporter.sendMail({
