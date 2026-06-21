@@ -41,16 +41,18 @@ const AdminDashboard = () => {
     bio: ''
   });
 
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
         const token = localStorage.getItem('token');
         const [appRes, staffRes] = await Promise.all([
-          fetch(`${import.meta.env.VITE_API_URL}/api/appointments`, {
+          fetch(`${API_URL}/api/appointments`, {
             headers: { 'Authorization': `Bearer ${token}` }
           }),
-          fetch(`${import.meta.env.VITE_API_URL}/api/users/doctors`, {
+          fetch(`${API_URL}/api/users/doctors`, {
             headers: { 'Authorization': `Bearer ${token}` }
           })
         ]);
@@ -84,7 +86,7 @@ const AdminDashboard = () => {
     setMessage('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/profile`, {
+      const res = await fetch(`${API_URL}/api/users/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -115,7 +117,7 @@ const AdminDashboard = () => {
     setAddDoctorError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/doctors`, {
+      const res = await fetch(`${API_URL}/api/users/doctors`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -76,7 +76,10 @@ export const addDoctor = async (req, res) => {
       consultationFee: consultationFee || 150
     });
 
-    res.status(201).json(doctor);
+    const doctorResponse = doctor.toObject();
+    delete doctorResponse.password;
+
+    res.status(201).json(doctorResponse);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

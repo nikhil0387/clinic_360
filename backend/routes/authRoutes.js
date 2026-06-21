@@ -7,6 +7,7 @@ import {
   resetPassword,
   quickAdmit
 } from '../controllers/authController.js';
+import { protect, authorize } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
@@ -15,6 +16,6 @@ router.post('/login', loginUser);
 router.post('/send-otp', sendOtp);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
-router.post('/quick-admit', quickAdmit);
+router.post('/quick-admit', protect, authorize('admin', 'doctor'), quickAdmit);
 
 export default router;

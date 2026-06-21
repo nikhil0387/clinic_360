@@ -18,11 +18,13 @@ const DoctorDashboard = () => {
   const [newApptData, setNewApptData] = useState({ patientId: '', date: '', timeSlot: '', notes: '' });
   const [quickAdmitData, setQuickAdmitData] = useState({ firstName: '', lastName: '', email: '', reason: '' });
 
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/appointments`, {
+        const response = await fetch(`${API_URL}/api/appointments`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -51,7 +53,7 @@ const DoctorDashboard = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/appointments`, {
+      const response = await fetch(`${API_URL}/api/appointments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -79,9 +81,13 @@ const DoctorDashboard = () => {
   const handleQuickAdmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/quick-admit`, {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/api/auth/quick-admit`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(quickAdmitData)
       });
       if (response.ok) {
@@ -384,7 +390,7 @@ const DoctorDashboard = () => {
                         <td className="py-4 px-6 font-bold text-slate-800">{app.patient?.firstName} {app.patient?.lastName}</td>
                         <td className="py-4 px-6 text-slate-600">{new Date(app.date).toLocaleDateString()}</td>
                         <td className="py-4 px-6 text-slate-600 font-semibold">{app.timeSlot}</td>
-                        <td className="py-4 px-6 text-slate-50 text-xs max-w-[150px] truncate">{app.notes || 'N/A'}</td>
+                        <td className="py-4 px-6 text-slate-700 text-xs max-w-[150px] truncate">{app.notes || 'N/A'}</td>
                         <td className="py-4 px-6">
                           <span className={`px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full ${app.status === 'scheduled' ? 'bg-amber-100 text-amber-700 border border-amber-200' : app.status === 'completed' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-red-100 text-red-700 border border-red-200'}`}>
                             {app.status === 'scheduled' ? 'Pending' : app.status}

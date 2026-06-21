@@ -19,10 +19,12 @@ const SpecialistRegistry = () => {
     return tab ? `${path}?tab=${tab}` : path;
   };
 
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/doctors`);
+        const res = await fetch(`${API_URL}/api/users/doctors`);
         if (res.ok) {
           const data = await res.json();
           setDoctors(data);
@@ -41,11 +43,32 @@ const SpecialistRegistry = () => {
     navigate('/');
   };
 
+  const getCommonPrefixLength = (str1, str2) => {
+    let i = 0;
+    const len = Math.min(str1.length, str2.length);
+    while (i < len && str1[i] === str2[i]) {
+      i++;
+    }
+    return i;
+  };
+
   const filteredDoctors = doctors.filter(doc => {
-    const term = query.toLowerCase();
+    const term = query.toLowerCase().trim();
     const fullName = `${doc.firstName} ${doc.lastName}`.toLowerCase();
     const specialty = (doc.specialization || '').toLowerCase();
-    return fullName.includes(term) || specialty.includes(term);
+    
+    let matchesSearch = true;
+    if (term) {
+      const nameMatch = fullName.includes(term);
+      const prefixLength = getCommonPrefixLength(term, specialty);
+      const specialtyMatch = specialty.includes(term) || term.includes(specialty) || prefixLength >= 4;
+      matchesSearch = nameMatch || specialtyMatch;
+    }
+    
+    const selectedSpecialty = searchParams.get('specialty') || 'All';
+    const matchesDropdown = selectedSpecialty === 'All' || doc.specialization === selectedSpecialty;
+    
+    return matchesSearch && matchesDropdown;
   });
 
   return (
@@ -134,11 +157,22 @@ const SpecialistRegistry = () => {
             </div>
             <div className="w-full lg:w-48">
               <label className="block text-sm font-semibold text-primary mb-2 font-label">Specialization</label>
-              <select className="w-full py-3 px-4 bg-surface-container-lowest border-none focus:ring-2 focus:ring-secondary rounded-lg text-sm outline-none">
-                <option>All</option>
-                <option>Cardiology</option>
-                <option>Neurology</option>
-                <option>Pediatrics</option>
+              <select 
+                className="w-full py-3 px-4 bg-surface-container-lowest border-none focus:ring-2 focus:ring-secondary rounded-lg text-sm outline-none"
+                value={searchParams.get('specialty') || 'All'}
+                onChange={(e) => {
+                  const newParams = new URLSearchParams(searchParams);
+                  if (e.target.value === 'All') {
+                    newParams.delete('specialty');
+                  } else {
+                    newParams.set('specialty', e.target.value);
+                  }
+                  setSearchParams(newParams);
+                }}
+              >
+                {['All', ...new Set(doctors.map(doc => doc.specialization).filter(Boolean))].map(spec => (
+                  <option key={spec} value={spec}>{spec}</option>
+                ))}
               </select>
             </div>
             <button className="w-full lg:w-auto bg-gradient-to-br from-[#00193c] to-[#002d62] text-white px-8 py-3 rounded-lg font-semibold text-sm shadow-lg shadow-primary/10 transition-all hover:opacity-90 active:scale-95">
@@ -150,7 +184,12 @@ const SpecialistRegistry = () => {
             <span className="px-4 py-1.5 bg-secondary-container text-on-secondary-container rounded-full text-[10px] md:text-xs font-semibold font-label flex items-center gap-1">
                 Available Today <span className="material-symbols-outlined text-[14px]">close</span>
             </span>
-            <button className="text-xs font-medium text-secondary hover:underline ml-2">Clear filters</button>
+            <button 
+              onClick={() => setSearchParams(new URLSearchParams())}
+              className="text-xs font-medium text-secondary hover:underline ml-2"
+            >
+              Clear filters
+            </button>
           </div>
         </section>
 

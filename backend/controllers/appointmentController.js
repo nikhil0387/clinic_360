@@ -62,6 +62,27 @@ export const createAppointment = async (req, res) => {
         const actualDoctorId = req.user.role === 'doctor' ? req.user._id : doctorId;
         const actualPatientId = req.user.role === 'patient' ? req.user._id : patientId;
         try {
+            // 1. Verify doctor exists and is actually a doctor
+            const doctor = await User.findOne({ _id: actualDoctorId, role: 'doctor' });
+            if (!doctor) {
+              return res.status(400).json({ message: 'Doctor not found or invalid doctor ID' });
+            }
+
+            if (!actualPatientId) {
+               return res.status(400).json({ message: 'Patient ID is required' });
+            }
+
+            // 2. Check for double booking
+            const existingAppointment = await Appointment.findOne({
+              doctor: actualDoctorId,
+              date: new Date(date),
+              timeSlot
+            });
+
+            if (existingAppointment) {
+              return res.status(400).json({ message: 'Time slot is already booked for this doctor' });
+            }
+
             const fallbackAppointment = await Appointment.create({
                 patient: actualPatientId,
                 doctor: actualDoctorId,

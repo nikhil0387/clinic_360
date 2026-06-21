@@ -14,20 +14,39 @@ const DoctorProfile = () => {
   };
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedSlot, setSelectedSlot] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [isBooking, setIsBooking] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState('');
   const [error, setError] = useState('');
   const [doctorId, setDoctorId] = useState('');
   const [doctorData, setDoctorData] = useState(null);
+  const [allAppointments, setAllAppointments] = useState([]);
   const [bookedSlots, setBookedSlots] = useState([]);
   const [fetchingSlots, setFetchingSlots] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+
+  // Filter booked slots based on selectedDate and doctorId
+  useEffect(() => {
+    if (doctorId && allAppointments.length > 0) {
+      const activeSlots = allAppointments
+        .filter(app => {
+          const appDateStr = new Date(app.date).toISOString().split('T')[0];
+          return app.doctor?._id === doctorId && appDateStr === selectedDate && app.status !== 'cancelled';
+        })
+        .map(app => app.timeSlot);
+      setBookedSlots(activeSlots);
+    } else {
+      setBookedSlots([]);
+    }
+  }, [selectedDate, doctorId, allAppointments]);
+
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   useEffect(() => {
     const fetchDoctorAndSlots = async () => {
       try {
         setFetchingSlots(true);
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/doctors`);
+        const res = await fetch(`${API_URL}/api/users/doctors`);
         if (res.ok) {
           const data = await res.json();
           const selectedDoc = idParam ? data.find(d => d._id === idParam) : data[0];
@@ -37,15 +56,12 @@ const DoctorProfile = () => {
 
             // Now fetch booked slots for this doctor
             const token = localStorage.getItem('token');
-            const appointmentsRes = await fetch(`${import.meta.env.VITE_API_URL}/api/appointments`, {
+            const appointmentsRes = await fetch(`${API_URL}/api/appointments`, {
               headers: { 'Authorization': `Bearer ${token}` }
             });
             if (appointmentsRes.ok) {
               const appointmentsData = await appointmentsRes.json();
-              // Filter appointments for THIS doctor specifically
-              const doctorAppointments = appointmentsData.filter(app => app.doctor._id === selectedDoc._id);
-              // Store booked time slots (simplified: assuming today for now)
-              setBookedSlots(doctorAppointments.map(app => app.timeSlot));
+              setAllAppointments(appointmentsData);
             }
           }
         }
@@ -80,7 +96,7 @@ const DoctorProfile = () => {
         return;
       }
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/appointments`, {
+      const response = await fetch(`${API_URL}/api/appointments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -88,7 +104,7 @@ const DoctorProfile = () => {
         },
         body: JSON.stringify({
           doctorId: doctorId,
-          date: new Date().toISOString(),
+          date: selectedDate,
           timeSlot: selectedSlot,
           notes: 'Consultation request from Profile Page'
         })
@@ -196,8 +212,19 @@ const DoctorProfile = () => {
           <div className="lg:col-span-4 bg-primary text-white rounded-xl p-6 shadow-2xl shadow-primary/20 sticky top-24 h-fit">
             <h3 className="text-xl font-bold font-headline mb-4">Book Appointment</h3>
             <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-primary-fixed-dim uppercase tracking-wider" htmlFor="booking-date">Select Date</label>
+                <input 
+                  id="booking-date"
+                  type="date" 
+                  min={new Date().toISOString().split('T')[0]} 
+                  value={selectedDate}
+                  onChange={(e) => { setSelectedDate(e.target.value); setSelectedSlot(''); }}
+                  className="w-full px-3 py-2 bg-primary-container text-white border border-on-primary-container/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary text-sm"
+                />
+              </div>
               <div className="space-y-3">
-                <p className="text-sm text-primary-fixed-dim font-label">Available Slots (Oct 24)</p>
+                <p className="text-sm text-primary-fixed-dim font-label">Available Slots for {new Date(selectedDate).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}</p>
                 <div className="grid grid-cols-3 gap-2">
                   {['09:00 AM', '10:30 AM', '01:00 PM', '02:30 PM', '04:00 PM'].map(slot => {
                     const isBooked = bookedSlots.includes(slot);
