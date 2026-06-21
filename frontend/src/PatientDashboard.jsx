@@ -44,12 +44,14 @@ const PatientDashboard = () => {
     }
   }, [user]);
 
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
   useEffect(() => {
     const fetchAppointments = async () => {
       setFetchingAppointments(true);
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/appointments`, {
+        const res = await fetch(`${API_URL}/api/appointments`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -80,7 +82,7 @@ const PatientDashboard = () => {
     setMessage('');
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/profile`, {
+      const response = await fetch(`${API_URL}/api/users/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

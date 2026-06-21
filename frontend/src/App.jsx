@@ -40,6 +40,18 @@ function App() {
               <AdminDashboard />
             </ProtectedRoute>
           } />
+          
+          {/* Catch-all 404 Page */}
+          <Route path="*" element={
+            <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center px-4 text-center">
+              <span className="material-symbols-outlined text-red-500 text-6xl mb-4">error</span>
+              <h1 className="text-3xl font-headline font-extrabold text-slate-800 tracking-tight">Page Not Found</h1>
+              <p className="text-slate-600 text-sm mt-2 max-w-sm">The clinic page you are looking for does not exist or has been moved.</p>
+              <a href="/" className="mt-6 px-6 py-2.5 bg-primary text-white text-xs font-bold rounded-lg shadow-sm hover:bg-opacity-95 transition-all">
+                Return to Home
+              </a>
+            </div>
+          } />
         </Routes>
       </AuthProvider>
     </Router>

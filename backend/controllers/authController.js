@@ -55,13 +55,18 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Invalid OTP' });
     }
 
-    // OTP is valid, remove it
-    await OTP.deleteOne({ email });
     const userExists = await User.findOne({ email });
 
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
+
+    if (role === 'admin') {
+      return res.status(400).json({ message: 'Cannot register directly as an Administrator' });
+    }
+
+    // OTP is valid, remove it
+    await OTP.deleteOne({ email });
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);

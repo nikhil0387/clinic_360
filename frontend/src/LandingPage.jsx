@@ -15,10 +15,12 @@ const LandingPage = () => {
   const [featuredDoctors, setFeaturedDoctors] = useState([]);
   const [loadingDoctors, setLoadingDoctors] = useState(true);
 
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
   React.useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/doctors`);
+        const res = await fetch(`${API_URL}/api/users/doctors`);
         if (res.ok) {
           const data = await res.json();
           setFeaturedDoctors(data.slice(0, 4));

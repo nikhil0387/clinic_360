@@ -145,7 +145,6 @@ const RegisterPage = () => {
                 >
                   <option value="patient">Patient</option>
                   <option value="doctor">Medical Provider</option>
-                  <option value="admin">Administrator</option>
                 </select>
                 <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
               </div>
